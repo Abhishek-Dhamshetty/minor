@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dispatch Notifications</title>
+  <style>
+    :root {
+      --ink: #0b1a2b;
+      --muted: #6b7280;
+      --panel: rgba(255, 255, 255, 0.96);
+      --accent: #0ea5e9;
+      --ok: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #e2e8f0, #cbd5f5 55%, #94a3b8);
+      color: var(--ink);
+    }
+    header {
+      padding: 20px 24px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+    .user-badge {
+      background: rgba(15, 23, 42, 0.1);
+      border: 1px solid rgba(15, 23, 42, 0.15);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+      padding: 12px 24px 24px;
+    }
+    .panel {
+      background: var(--panel);
+      border-radius: 16px;
+      padding: 14px 16px;
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.2);
+    }
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #0f2f4f;
+    }
+    .auth-form label {
+      display: block;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .auth-form input {
+      width: 100%;
+      padding: 8px 10px;
+      margin-top: 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(15, 23, 42, 0.2);
+    }
+    .auth-form button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .notice-card {
+      border: 1px solid rgba(15, 23, 42, 0.15);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      background: #fff;
+    }
+    .notice-card h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+    .notice-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .notice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 12px;
+    }
+    .notice-grid div {
+      background: rgba(15, 23, 42, 0.04);
+      border-radius: 10px;
+      padding: 6px 8px;
+    }
+    .notice-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .notice-actions a {
+      text-decoration: none;
+      color: #fff;
+      background: var(--ok);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .notice-actions button {
+      border: none;
+      background: var(--warn);
+      color: #111827;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none !important;
+    }
+    @media (max-width: 980px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Dispatch Notifications</h1>
+    <nav>
+      <a href="notifications.html">Notifications</a>
+      <a href="analytics.html">Analytics</a>
+    </nav>
+    <span class="user-badge" id="user-badge">Guest</span>
+  </header>
+  <div class="container">
+    <aside class="panel">
+      <h2>Authentication</h2>
+      <form class="auth-form" id="auth-form">
+        <label>Email
+          <input type="email" id="auth-email" placeholder="you@domain.com" required />
+        </label>
+        <label>Access token
+          <input type="password" id="auth-token" placeholder="demo-token" required />
+        </label>
+        <button type="submit">Sign in</button>
+      </form>
+      <p class="notice-meta" id="auth-status">Not authenticated. Notifications are hidden.</p>
+    </aside>
+    <main class="panel hidden" id="feed-panel">
+      <h2>Live Dispatch Feed</h2>
+      <div id="notice-list"></div>
+    </main>
+  </div>
+
+  <script>
+    const authForm = document.getElementById("auth-form");
+    const authEmail = document.getElementById("auth-email");
+    const authToken = document.getElementById("auth-token");
+    const authStatus = document.getElementById("auth-status");
+    const userBadge = document.getElementById("user-badge");
+    const noticeList = document.getElementById("notice-list");
+    const feedPanel = document.getElementById("feed-panel");
+
+    function loadAuth() {
+      const auth = JSON.parse(localStorage.getItem("dispatch_auth") || "null");
+      if (auth && auth.email) {
+        userBadge.textContent = auth.email;
+        authStatus.textContent = "Authenticated. Receiving dispatch notifications.";
+        feedPanel.classList.remove("hidden");
+        return auth;
+      }
+      userBadge.textContent = "Guest";
+      authStatus.textContent = "Not authenticated. Notifications are hidden.";
+      feedPanel.classList.add("hidden");
+      return null;
+    }
+
+    function saveAuth(email, token) {
+      const auth = { email, token };
+      localStorage.setItem("dispatch_auth", JSON.stringify(auth));
+      loadAuth();
+      renderNotifications();
+    }
+
+    authForm.addEventListener("submit", event => {
+      event.preventDefault();
+      saveAuth(authEmail.value.trim(), authToken.value.trim());
+    });
+
+    function formatCoords(coords) {
+      if (!coords) return "--";
+      return `${coords[0].toFixed(5)}, ${coords[1].toFixed(5)}`;
+    }
+
+    function renderNotifications() {
+      const auth = loadAuth();
+      noticeList.innerHTML = "";
+      if (!auth) return;
+      const items = JSON.parse(localStorage.getItem("dispatch_notifications") || "[]");
+      if (!items.length) {
+        noticeList.innerHTML = "<div class=\"notice-meta\">No dispatch notifications yet.</div>";
+        return;
+      }
+      items.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "notice-card";
+        card.innerHTML = `
+          <h3>${item.ambulanceId} dispatched</h3>
+          <div class="notice-meta">${new Date(item.createdAt).toLocaleString()}</div>
+          <div class="notice-grid">
+            <div><strong>Hospital</strong><br />${item.hospitalName || "--"}</div>
+            <div><strong>Status</strong><br />${item.status || "--"}</div>
+            <div><strong>Pickup</strong><br />${formatCoords(item.pickupCoords)}</div>
+            <div><strong>Dropoff</strong><br />${formatCoords(item.dropoffCoords)}</div>
+            <div><strong>Route distance</strong><br />${item.routeDistanceMeters || 0} m</div>
+            <div><strong>Speed</strong><br />${item.speedMetersPerTick || 0} m/tick</div>
+          </div>
+          <div class="notice-actions">
+            <a href="index.html?follow=${item.ambulanceId}" target="_blank">Live location</a>
+            <button data-copy="${item.ambulanceId}">Copy ID</button>
+          </div>
+        `;
+        noticeList.appendChild(card);
+      });
+      noticeList.querySelectorAll("button[data-copy]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          navigator.clipboard.writeText(btn.getAttribute("data-copy") || "");
+          btn.textContent = "Copied";
+          setTimeout(() => {
+            btn.textContent = "Copy ID";
+          }, 1500);
+        });
+      });
+    }
+
+    function listenForDispatches() {
+      if ("BroadcastChannel" in window) {
+        const channel = new BroadcastChannel("ambulance-dispatch");
+        channel.addEventListener("message", () => {
+          renderNotifications();
+        });
+      }
+      window.addEventListener("storage", event => {
+        if (event.key === "dispatch_notifications") {
+          renderNotifications();
+        }
+      });
+    }
+
+    renderNotifications();
+    listenForDispatches();
+  </script>
+</body>
+</html>

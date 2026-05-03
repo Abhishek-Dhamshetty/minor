@@ -1,5 +1,0 @@
-sumolib
-traci
-numpy
-pyproj
-python-pptx

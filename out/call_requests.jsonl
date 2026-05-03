@@ -1,3 +1,0 @@
-
-{"timestamp": 1775743793, "call_id": "call_1775743793014", "lat": 17.451186, "lon": 78.385646, "emergency_type": "general", "caller_name": "citizen_user", "preferred_hospital_id": "pace_hospitals", "created_by": "citizen_user", "created_by_role": "user", "status": "new"}
-{"timestamp": 1775744030, "call_id": "call_1775744030644", "lat": 17.454141, "lon": 78.38008, "emergency_type": "general", "caller_name": "citizen_user", "preferred_hospital_id": "pace_hospitals", "created_by": "citizen_user", "created_by_role": "user", "status": "new"}
