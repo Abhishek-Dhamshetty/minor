@@ -1,205 +1,51 @@
-# Intelligent Emergency Vehicle Management (Hyderabad + SUMO)
+# Emergency Traffic Preemption (Web UI)
 
-This project implements an edge-first emergency corridor system for SUMO that supports:
+This repository contains a software-only web simulation of an emergency traffic preemption system for Hyderabad. It visualizes ambulances, hospitals, traffic signals, preemption behavior, and dispatch notifications.
 
-1. Dual verification trigger:
-	- Siren confidence score from local ML/microphone input
-	- Wireless trigger input (LoRa/RF/GPS gateway)
-2. Automatic multi-intersection green corridor (TraCI preemption)
-3. Dynamic rerouting to nearest suitable hospital using live SUMO travel time and shortest-path route search
-4. Hospital pre-notification with ETA, vehicle ID, emergency type
-5. Automatic restoration of normal traffic light programs after ambulance clearance
+## What this includes
 
-The design does not require internet for junction-level control.
+- Interactive map simulation with ambulance dispatch, signal preemption, and traffic behavior.
+- Notifications page for dispatch updates and live ambulance follow links.
+- Analytics dashboard showing dispatch metrics and charts.
+- Static data files used by the UI.
 
-## Project files
+## Quick start
 
-- `smart_emergency_system.py`: end-to-end orchestrator
-- `detection_fusion.py`: false-trigger-resistant dual verification logic
-- `signal_preemption.py`: green corridor + traffic light restoration
-- `route_planner.py`: ETA estimation and route application
-- `hospital_dispatch.py`: hospital selection and pre-notification
-- `hyderabad_hospitals.csv`: starter hospital registry
-- `config/hyderabad_example.json`: preemption and network mapping template
-- `generate_hospital_markers.py`: creates map-style real-world hospital symbols for SUMO GUI
-- `ensure_traffic_signals.py`: validates TLS presence and rebuilds net from OSM with guessed signals when needed
+From the repository root:
 
-## 1) Prerequisites
-
-Install:
-
-- SUMO (latest stable)
-- Python 3.10+
-
-Set environment variable:
-
-- Windows PowerShell:
-
-```powershell
-$env:SUMO_HOME = "C:\Program Files (x86)\Eclipse\Sumo"
+```bash
+python3 -m http.server 8000
 ```
 
-Install Python dependencies:
+Open the web UI:
 
-```powershell
-pip install -r requirements.txt
+```text
+http://localhost:8000/web/index.html
 ```
 
-## 2) Build Hyderabad SUMO map
+Notifications and analytics:
 
-Option A: Download Hyderabad OSM extract and convert with `netconvert`.
-
-```powershell
-netconvert --osm-files hyderabad.osm.xml --output-file hyderabad.net.xml
+```text
+http://localhost:8000/web/notifications.html
+http://localhost:8000/web/analytics.html
 ```
 
-Create trips/routes (example):
+## Project layout
 
-```powershell
-python "%SUMO_HOME%\tools\randomTrips.py" -n hyderabad.net.xml -o hyderabad.trips.xml -r hyderabad.rou.xml -e 3600
-```
+- `web/index.html`: main simulation UI
+- `web/notifications.html`: dispatch notifications
+- `web/analytics.html`: analytics dashboard
+- `hyderabad_hospitals.csv`: hospital locations used by the UI
+- `hyderabad.net.xml`: traffic lights used by the UI
 
-Create a SUMO config file (for example `hyderabad.sumocfg`) that references:
+## Notes
 
-- `hyderabad.net.xml`
-- `hyderabad.rou.xml`
+- This is a software-only simulation (no hardware integration).
+- The map uses OpenStreetMap tiles and OSRM routing (public endpoints).
+- The notifications and analytics pages use localStorage for data sharing in the browser.
+  python smart_emergency_system.py --sumocfg hyderabad.sumocfg --sumo-binary sumo
 
-You can generate `hyderabad.sumocfg` automatically:
-
-```powershell
-python create_hyderabad_sumocfg.py --net-file hyderabad.net.xml --route-files hyderabad.rou.xml,emergency_vehicle.rou.xml --out hyderabad.sumocfg
-```
-
-## 2.1) Use all Hyderabad hospitals automatically (not only 3-4)
-
-If you have `hyderabad.osm.xml` and `hyderabad.net.xml`, run:
-
-```powershell
-python generate_hyderabad_hospitals_from_osm.py `
-  --osm hyderabad.osm.xml `
-  --net hyderabad.net.xml `
-  --out-csv hyderabad_hospitals.csv `
-  --out-edge-map config/hospital_edge_map.generated.json `
-  --update-config config/hyderabad_example.json
-```
-
-This command does all of the following:
-
-1. Extracts all OSM hospitals in Hyderabad.
-2. Maps each hospital to the nearest drivable SUMO edge.
-3. Regenerates `hyderabad_hospitals.csv` with the full list.
-4. Updates `hospital_edge_map` in `config/hyderabad_example.json` so rerouting works city-wide.
-
-After this step, the controller reroutes across the full generated hospital list.
-
-If your downloaded map file is named `map.osm`, use this command directly:
-
-```powershell
-python generate_hyderabad_hospitals_from_osm.py --osm map.osm --net hyderabad.net.xml --out-csv hyderabad_hospitals.csv --out-edge-map config/hospital_edge_map.generated.json --update-config config/hyderabad_example.json
-```
-
-## 3) Add emergency vehicle and TLS phase mapping
-
-1. Ensure an emergency vehicle exists in your route file (for example `ambulance_1` with type `emergency`).
-2. You can create one or more ambulances automatically from existing valid car routes:
-
-```powershell
-python create_multi_ambulance_routes.py --base-route hyderabad_car.rou.xml --out emergency_vehicle.rou.xml --count 12 --depart-start 10 --depart-gap 18
-```
-
-`--count` is enforced to 10..15. Each ambulance is generated with blue-light/siren parameters.
-
-3. `config/hyderabad_example.json` supports two modes:
-  - Auto mode (recommended): keep `preemption_phases` empty and the controller finds a green phase from link index.
-  - Manual mode: set explicit TLS phase indices if you want strict control at selected junctions.
-
-Useful TLS discovery during test:
-
-```powershell
-python - << 'PY'
-import os, sys
-sys.path.append(os.path.join(os.environ['SUMO_HOME'],'tools'))
-import sumolib
-net=sumolib.net.readNet('hyderabad.net.xml')
-print('TLS count:', len(net.getTrafficLights()))
-for tls in net.getTrafficLights()[:10]:
-	 print(tls.getID())
-PY
-```
-
-## 4) Sensor input integration (edge/local)
-
-The orchestrator reads two local files continuously:
-
-- `out/mic_score.txt` -> float in [0,1]
-- `out/wireless_signal.txt` -> one of: `1`, `true`, `yes`, `on`, `detected`
-
-This allows you to connect any local ML/LoRa process without cloud dependency.
-
-## 5) Run the integrated system
-
-```powershell
-python smart_emergency_system.py `
-  --sumocfg hyderabad.sumocfg `
-  --sumo-binary sumo-gui `
-  --vehicle-id ambulance_1 `
-  --emergency-type trauma `
-  --mic-score-file out/mic_score.txt `
-  --wireless-file out/wireless_signal.txt `
-  --hospitals-csv hyderabad_hospitals.csv `
-  --config config/hyderabad_example.json
-```
-
-For your current workspace, this single command runs the full setup and launch:
-
-```powershell
-.\run_hyderabad.ps1
-```
-
-To reduce regular congestion from cars and bikes during emergency validation:
-
-```powershell
-.\run_hyderabad.ps1 -CarTrafficScale 0.6 -BikeTrafficScale 0.5
-```
-
-Lower scale means fewer generated trips (for example, `0.5` means about half baseline demand).
-
-Strict production mode (high traffic + multiple ambulances + conflict handling + health-check gate):
-
-```powershell
-.\run_hyderabad.ps1 -Profile strict-production -SumoBinary sumo-gui
-```
-
-Headless production run:
-
-```powershell
-.\run_hyderabad.ps1 -Profile strict-production -SumoBinary sumo
-```
-
-The runner now does all of this before launch:
-
-1. Generates high-density mixed traffic demand (cars + bikes + pedestrians).
-2. Creates multiple ambulance vehicles.
-3. Builds sumocfg with car + bike + pedestrian + emergency route files.
-4. Regenerates hospital-edge map from OSM.
-5. Generates hospital markers with red plus symbol overlays.
-6. Runs `health_check.py` and blocks launch if reachability is below threshold.
-7. Runs `ensure_traffic_signals.py` and auto-rebuilds the network from `map.osm` if no traffic signals exist.
-8. Runs with strict-production ambulance volume (10-15) for congestion stress testing.
-9. Generates dedicated shortest hospital paths in `config/hospital_priority_paths.generated.json`.
-
-This command links your SUMO map and Python logic as follows:
-
-1. `--sumocfg hyderabad.sumocfg`: loads Hyderabad network and routes.
-2. `--hospitals-csv hyderabad_hospitals.csv`: loads all hospitals.
-3. `--config config/hyderabad_example.json`: loads hospital-to-edge mapping and signal preemption setup.
-4. Controller computes live ETA to every mapped hospital and reroutes automatically.
-
-Headless mode:
-
-```powershell
-python smart_emergency_system.py --sumocfg hyderabad.sumocfg --sumo-binary sumo
-```
+````
 
 ## 5.2) Phase-1 Real-World Data + Police Alerts
 
@@ -215,7 +61,7 @@ python smart_emergency_system.py `
   --lora-events-file out/lora_events.jsonl `
   --police-log out/police_notifications.jsonl `
   --write-web-state
-```
+````
 
 ### Live feed inputs
 
@@ -252,7 +98,13 @@ python smart_emergency_system.py --sumocfg hyderabad.sumocfg --police-endpoint h
 Each line is one JSON object:
 
 ```json
-{"timestamp": 1710000000, "ambulance_id": "ambulance_1", "lat": 17.4401, "lon": 78.3902, "emergency": true}
+{
+  "timestamp": 1710000000,
+  "ambulance_id": "ambulance_1",
+  "lat": 17.4401,
+  "lon": 78.3902,
+  "emergency": true
+}
 ```
 
 ### Dashboard fields added
@@ -268,12 +120,16 @@ Web dashboard now shows:
 
 1. Runner no longer forces always-on green corridor.
 2. Emergency preemption now uses realistic transition windows:
-  - yellow transition (`yellow_transition_s`, default 3s)
-  - all-red clearance (`all_red_s`, default 2s)
+
+- yellow transition (`yellow_transition_s`, default 3s)
+- all-red clearance (`all_red_s`, default 2s)
+
 3. Green hold duration is demand-adaptive and bounded (`min_dynamic_green_s`..`max_dynamic_green_s`, default 18..70s).
 4. Anti-oscillation guards reduce rapid TLS flipping:
-  - minimum owner hold (`min_owner_hold_s`)
-  - post-restore cooldown (`post_restore_cooldown_s`)
+
+- minimum owner hold (`min_owner_hold_s`)
+- post-restore cooldown (`post_restore_cooldown_s`)
+
 5. After preemption release, TLS returns to baseline SUMO program.
 
 ## 5.4) User Web Call -> Ambulance Dispatch -> Hospital Reroute
@@ -432,17 +288,17 @@ When you run with `-SumoBinary sumo-gui`, the simulation shows:
 This project tracks and enforces green corridor behavior through these runtime stages:
 
 1. Emergency vehicle detection:
-  `smart_emergency_system.py` identifies active ambulances by type/id.
+   `smart_emergency_system.py` identifies active ambulances by type/id.
 2. Junction scan:
-  For each ambulance, `traci.vehicle.getNextTLS` is used to find upcoming signals.
+   For each ambulance, `traci.vehicle.getNextTLS` is used to find upcoming signals.
 3. Priority scoring:
-  Closer ambulances with higher emergency priority get stronger score.
+   Closer ambulances with higher emergency priority get stronger score.
 4. Signal control:
-  `signal_preemption.py` sets the desired phase to green for the winning ambulance movement.
+   `signal_preemption.py` sets the desired phase to green for the winning ambulance movement.
 5. Ownership fairness:
-  Ownership windows avoid rapid oscillation between ambulances.
+   Ownership windows avoid rapid oscillation between ambulances.
 6. Restore logic:
-  Signals are restored to baseline after corridor window ends.
+   Signals are restored to baseline after corridor window ends.
 
 Telemetry keys:
 
@@ -490,11 +346,11 @@ To avoid fleet pile-up at one hospital:
 ## 11) Event Semantics
 
 1. `ARRIVAL`:
-  Logged once when ambulance is on destination hospital edge and nearly stopped.
+   Logged once when ambulance is on destination hospital edge and nearly stopped.
 2. `BREAKDOWN`:
-  Logged when vehicle remains stopped beyond configured threshold on non-internal edge.
+   Logged when vehicle remains stopped beyond configured threshold on non-internal edge.
 3. `SUMMARY`:
-  Logged when all ambulances are completed (reached + breakdown).
+   Logged when all ambulances are completed (reached + breakdown).
 
 ## 12) Recommended Validation Checklist
 
@@ -503,7 +359,7 @@ To avoid fleet pile-up at one hospital:
 3. Confirm arrivals populate timeline with elapsed seconds.
 4. Confirm no repeated arrival line for same ambulance.
 5. Confirm hospitals are load-distributed across fleet under congestion.
-5. Ambulance debug camera mode: auto-tracks and highlights active ambulances in SUMO GUI.
+6. Ambulance debug camera mode: auto-tracks and highlights active ambulances in SUMO GUI.
 
 You can tune camera behavior with controller options:
 
@@ -555,4 +411,3 @@ For wider smart-city scaling:
 3. Route should change when traffic/ETA changes.
 4. Hospital notification should appear in endpoint or local JSONL log.
 5. Traffic lights should return to baseline after ambulance passes.
-
