@@ -34,6 +34,31 @@
       font-weight: 900;
       letter-spacing: 0.3px;
     }
+    nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .nav-btn {
+      text-decoration: none;
+      color: #0f2f4f;
+      background: rgba(15, 23, 42, 0.08);
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .nav-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+    }
+    .nav-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
     .user-badge {
       background: rgba(15, 23, 42, 0.1);
       border: 1px solid rgba(15, 23, 42, 0.15);
@@ -156,8 +181,8 @@
   <header>
     <h1>Dispatch Notifications</h1>
     <nav>
-      <a href="notifications.html">Notifications</a>
-      <a href="analytics.html">Analytics</a>
+      <a class="nav-btn active" href="notifications.html">Notifications</a>
+      <a class="nav-btn" href="analytics.html">Analytics</a>
     </nav>
     <span class="user-badge" id="user-badge">Dispatch Desk</span>
   </header>

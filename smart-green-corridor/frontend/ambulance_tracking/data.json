@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "label": "AMB-021", "value": "Active - Sector 7" },
+    { "label": "AMB-033", "value": "En Route - Sector 3" },
+    { "label": "AMB-045", "value": "Available - Station 2" }
+  ]
+}

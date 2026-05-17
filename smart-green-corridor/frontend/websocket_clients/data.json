@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "label": "Telemetry Stream", "value": "Connected" },
+    { "label": "Dispatch Stream", "value": "Reconnecting" },
+    { "label": "Replay Stream", "value": "Idle" }
+  ]
+}

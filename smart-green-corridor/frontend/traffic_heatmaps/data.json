@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "label": "Density", "value": "High" },
+    { "label": "Speed", "value": "Moderate" },
+    { "label": "Queue Pressure", "value": "Rising" }
+  ]
+}

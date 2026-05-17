@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "label": "Priority Route", "value": "AMB-021" },
+    { "label": "Detour Route", "value": "AMB-033" },
+    { "label": "ETA Delta", "value": "-38s" }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "label": "Avg Response", "value": "118s" },
+    { "label": "Green Wave", "value": "0.42" },
+    { "label": "Preemptions", "value": "14" }
+  ]
+}

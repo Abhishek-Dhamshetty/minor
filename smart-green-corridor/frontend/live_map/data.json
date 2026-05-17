@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "label": "Primary Layer", "value": "Corridor Flow" },
+    { "label": "Overlay", "value": "Incident Hotspots" },
+    { "label": "Telemetry", "value": "Streaming" }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "label": "Corridor C-07", "value": "Override Active" },
+    { "label": "Corridor C-11", "value": "Hold Preemption" },
+    { "label": "Fleet Posture", "value": "Priority Level 2" }
+  ]
+}
