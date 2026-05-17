@@ -1,0 +1,4 @@
+hospital_rules:
+  capacity_weight: 0.35
+  eta_weight: 0.65
+  min_capacity: 2

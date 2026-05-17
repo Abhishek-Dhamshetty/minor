@@ -1,0 +1,6 @@
+profiles:
+  default:
+    base_s: 18
+    min_s: 12
+    max_s: 70
+    queue_gain: 1.6

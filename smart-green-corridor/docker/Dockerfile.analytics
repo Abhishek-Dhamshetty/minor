@@ -1,0 +1,4 @@
+FROM node:20-alpine
+WORKDIR /app
+COPY frontend/ /app/frontend/
+CMD ["bash", "-lc", "echo Analytics container placeholder"]

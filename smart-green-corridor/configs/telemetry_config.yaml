@@ -1,0 +1,5 @@
+telemetry:
+  websocket_channel: corridor.telemetry
+  kafka_topic: telemetry.events
+  redis_keyspace: telemetry
+  sample_period_ms: 250

@@ -1,0 +1,10 @@
+priority_rules:
+  - name: critical
+    min_score: 0.85
+    green_hold_boost: 1.25
+  - name: high
+    min_score: 0.65
+    green_hold_boost: 1.10
+  - name: normal
+    min_score: 0.45
+    green_hold_boost: 1.00

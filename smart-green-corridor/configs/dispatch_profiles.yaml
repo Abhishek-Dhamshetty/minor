@@ -1,0 +1,4 @@
+dispatch:
+  nearest_ambulance: true
+  reroute_interval_s: 12
+  use_corridor_sync: true

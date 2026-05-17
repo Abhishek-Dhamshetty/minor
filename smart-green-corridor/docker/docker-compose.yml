@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  sumo:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.sumo
+    ports:
+      - "8813:8813"
+  dispatch:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dispatch
+    ports:
+      - "8080:8080"
+  analytics:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.analytics
+    ports:
+      - "3000:3000"

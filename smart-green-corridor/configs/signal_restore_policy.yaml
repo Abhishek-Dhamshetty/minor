@@ -1,0 +1,5 @@
+restore_policy:
+  min_green_s: 8
+  max_green_s: 70
+  yellow_s: 3
+  all_red_s: 1

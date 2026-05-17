@@ -1,0 +1,8 @@
+model:
+  type: lstm
+  lookback_steps: 16
+  horizon_steps: 8
+  features:
+    - mean_speed
+    - queue_length
+    - density

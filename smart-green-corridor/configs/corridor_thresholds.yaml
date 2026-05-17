@@ -1,0 +1,5 @@
+corridor:
+  lookahead_m: 450
+  max_active_signals: 12
+  ownership_window_s: 22
+  restore_after_s: 24

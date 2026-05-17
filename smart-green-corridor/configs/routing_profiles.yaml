@@ -1,0 +1,11 @@
+profiles:
+  baseline:
+    algorithm: dijkstra
+    dynamic_weights: true
+  congestion_aware:
+    algorithm: astar
+    dynamic_weights: true
+    heuristic_eta_minimization: true
+  bidirectional:
+    algorithm: bidirectional_astar
+    dynamic_weights: true
